@@ -1,0 +1,143 @@
+- name: Set up server
+  hosts: myhosts
+  become: true
+
+  tasks:
+    - name: Check required variables
+      assert:
+        that:
+          - domain_name is defined
+          - certbot_email is defined
+        fail_msg: "You must provide all required variables"
+
+    - name: Update apt cache and upgrade
+      apt:
+        update_cache: yes
+
+    - name: Install base packages
+      apt:
+        name:
+          - git
+          - nginx
+          - snapd
+          - ca-certificates
+        state: present
+
+    - name: Create directory for Docker keyrings
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download Docker GPG key
+      get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
+    - name: Add Docker apt repository
+      copy:
+        dest: /etc/apt/sources.list.d/docker.sources
+        mode: '0644'
+        content: |
+          Types: deb
+          URIs: https://download.docker.com/linux/ubuntu
+          Suites: {{ ansible_facts['lsb']['codename'] }}
+          Components: stable
+          Signed-By: /etc/apt/keyrings/docker.asc
+
+    - name: Install Docker Engine and plugins
+      apt:
+        update_cache: yes
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Ensure Docker service is enabled and running
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Ensure Docker works
+      command: docker run --rm hello-world
+      changed_when: false
+
+    - name: Remove OS-packaged certbot if present
+      apt:
+        name: certbot
+        state: absent
+        purge: true
+
+    - name: Install certbot via snap
+      command: snap install --classic certbot
+      args:
+        creates: /snap/bin/certbot
+
+    - name: Ensure certbot command is available at /usr/bin/certbot
+      file:
+        src: /snap/bin/certbot
+        dest: /usr/bin/certbot
+        state: link
+
+    - name: Create nginx site config
+      copy:
+        dest: /etc/nginx/sites-available/app.conf
+        mode: '0644'
+        content: |
+          upstream python_backend {
+              # Docker is publishing 8080 on the host
+              server 127.0.0.1:8080;
+          }
+
+          server {
+              listen 80;
+              listen [::]:80;
+
+              server_name {{ domain_name }};
+
+              # Python backend under /botanist/
+              location /botanist/ {
+                  proxy_pass         http://python_backend/;
+                  proxy_http_version 1.1;
+
+                  proxy_set_header   Host $host;
+                  proxy_set_header   X-Real-IP $remote_addr;
+                  proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header   X-Forwarded-Proto $scheme;
+              }
+          }
+      notify: Reload nginx
+
+    - name: Enable nginx site
+      file:
+        src: /etc/nginx/sites-available/app.conf
+        dest: /etc/nginx/sites-enabled/app.conf
+        state: link
+      notify: Reload nginx
+
+    - name: Test nginx configuration
+      command: nginx -t
+      changed_when: false
+
+    - name: Obtain/renew certificate with certbot (nginx plugin)
+      command: >
+        certbot --nginx
+        -d {{ domain_name }}
+        --non-interactive
+        --agree-tos
+        --email {{ certbot_email }}
+
+    - name: Test certbot automatic renewal (dry run)
+      command: certbot renew --dry-run
+      changed_when: false
+
+  handlers:
+    - name: Reload nginx
+      service:
+        name: nginx
+        state: reloaded

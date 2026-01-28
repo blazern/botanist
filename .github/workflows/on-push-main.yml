@@ -1,0 +1,17 @@
+name: on push main
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: on-push-main
+  cancel-in-progress: true
+
+jobs:
+  ansible:
+    uses: ./.github/workflows/run-ansible.yml
+    secrets: inherit
