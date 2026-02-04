@@ -1,0 +1,31 @@
+- name: Set up and run the Python server
+  hosts: myhosts
+  become: true
+
+  vars:
+    app_dir: /opt/botanist
+    repo_url: https://github.com/blazern/botanist.git
+    docker_compose_file: docker/docker-compose.yml
+
+  tasks:
+    - name: Ensure git is installed
+      apt:
+        name: git
+        state: present
+        update_cache: yes
+
+    - name: Clone Botanist repository
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_dir }}"
+        version: main
+        update: yes
+
+    - name: Ensure Docker Compose plugin is available
+      command: docker compose version
+      changed_when: false
+
+    - name: Build and start services with Docker Compose
+      command: docker compose -f {{ docker_compose_file }} up -d --build
+      args:
+        chdir: "{{ app_dir }}"
