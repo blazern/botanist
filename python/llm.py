@@ -8,7 +8,7 @@ from openai import OpenAI
 import illness_schedule
 from illness_schedule import Article
 
-CHAT_GPT_MODEL = "gpt-5.2"
+CHAT_GPT_MODEL = "gpt-5-nano-2025-08-07"
 
 CHAT_GPT_INSTRUCTION_SELECT_ARTICLES = """
 You are given a JSON object with:
