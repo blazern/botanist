@@ -9,6 +9,6 @@ services:
     build:
       context: ..
       dockerfile: docker/bot/Dockerfile
-      args:
-        - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:?telegram bot token must be set}
-
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?Telegram bot token must be set}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OpenAI token must be set}

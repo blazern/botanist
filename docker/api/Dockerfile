@@ -3,8 +3,8 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # copy and install dependencies
-COPY python/requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
+COPY python/requirements_server.txt /app/requirements_server.txt
+RUN pip install --no-cache-dir -r /app/requirements_server.txt
 
 # copy python code
 COPY python/ /app/python/

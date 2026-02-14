@@ -12,6 +12,7 @@
       assert:
         that:
           - telegram_bot_token is defined
+          - openai_api_key is defined
         fail_msg: "You must provide all required variables"
 
     - name: Ensure git is installed
@@ -37,3 +38,4 @@
         chdir: "{{ app_dir }}"
       environment:
         TELEGRAM_BOT_TOKEN: "{{ telegram_bot_token }}"
+        OPENAI_API_KEY: "{{ openai_api_key }}"

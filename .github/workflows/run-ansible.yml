@@ -50,7 +50,5 @@ jobs:
           ansible-playbook -i inventory.ini setup_all.yaml \
             -e "domain_name=${{ secrets.SERVER_HOSTNAME }}" \
             -e "certbot_email=${{ secrets.CERTBOT_EMAIL }}" \
-            -e "telegram_bot_token=${{ secrets.TELEGRAM_BOT_TOKEN }}"
-
-
-
+            -e "telegram_bot_token=${{ secrets.TELEGRAM_BOT_TOKEN }}" \
+            -e "openai_api_key=${{ secrets.OPENAI_API_KEY }}"
