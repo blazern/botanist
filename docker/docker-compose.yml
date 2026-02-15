@@ -5,6 +5,8 @@ services:
       dockerfile: docker/api/Dockerfile
     ports:
       - "8080:8000"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OpenAI token must be set}
   bot:
     build:
       context: ..
