@@ -89,7 +89,11 @@ async def find_relevant_articles(
     }
     articles_numbers_response = await chatgpt_client.responses.create(
         instructions=CHAT_GPT_INSTRUCTION_SELECT_ARTICLES,
-        input=json.dumps(articles_headers_input),
+        input=json.dumps(
+            articles_headers_input,
+            # So that text instead of codes is used (i.e. not "\u0434\u0435\u043f\u0440\u0435\u0441\u0441\u0438\u044f")
+            ensure_ascii=False,
+        ),
         model=CHAT_GPT_MODEL,
     )
     articles_numbers_json = json.loads(articles_numbers_response.output_text)
@@ -106,7 +110,11 @@ async def find_relevant_articles(
 
         quotes_response = await chatgpt_client.responses.create(
             instructions=CHAT_GPT_INSTRUCTION_FIND_QUOTES,
-            input=json.dumps(input_artile),
+            input=json.dumps(
+                input_artile,
+                # So that text instead of codes is used (i.e. not "\u0434\u0435\u043f\u0440\u0435\u0441\u0441\u0438\u044f")
+                ensure_ascii=False,
+            ),
             model=CHAT_GPT_MODEL,
         )
         quotes_json = json.loads(quotes_response.output_text)
